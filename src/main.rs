@@ -37,7 +37,7 @@ async fn main() {
 
 
     if let Err(err) =  run(config).await {
-        error!("Processing Error - {}", err);
+        error!("{}", err);
     }
 }
 pub async fn run(config: Config) -> Result<(), Error> {
@@ -52,9 +52,13 @@ pub async fn run(config: Config) -> Result<(), Error> {
     //     info!("{}", account);
     // }
 
-    let account_id = "12345678".to_string();
-    let amount: BigDecimal = BigDecimal::from_str("35.8").unwrap();
-    bank_service.debit(account_id, amount);
+    let account = bank_service.find_account("1601783131".to_string()).await?;
+    info!("{}", account);
+    let doc_id = bank_service.delete_account(account.account_id).await?;
+    info!("Successfully deleted account: {}, docID: {}", "1601783131", doc_id);
+    // let account_id = "12345678".to_string();
+    // let amount: BigDecimal = BigDecimal::from_str("35.8").unwrap();
+    // bank_service.debit(account_id, amount).await?;
 
 
     // let mut account = Account::new("Samuel Fatoki".to_string(), "07039645560".to_string());

@@ -15,7 +15,9 @@ pub enum Error {
     SerdeError(serde_json::error::Error),
     Custom(String),
     IonError(IonParserError),
-    QLDBError(QLDBError)
+    QLDBError(QLDBError),
+    AccountNotFound(String),
+    NoRowsAffected
 }
 
 impl fmt::Display for Error {
@@ -28,7 +30,9 @@ impl fmt::Display for Error {
             Error::InsufficientFunds(amount) => write!(f, "Insufficient funds in account - {}", amount),
             Error::Unsupported(s) => write!(f, "Not supported"),
             Error::IonError(s) => write!(f, "Ion Parser Error: {}", s),
-            Error::QLDBError(s) => write!(f, "QLDB Error: {}", s)
+            Error::QLDBError(s) => write!(f, "QLDB Error: {}", s),
+            Error::AccountNotFound(s) => write!(f, "Account not found: {}", s),
+            Error::NoRowsAffected => write!(f, "No rows affected")
         }
     }
 }

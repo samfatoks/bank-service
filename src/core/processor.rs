@@ -67,9 +67,34 @@ impl QldbProcessor {
     //     let accounts: Vec<Account> = builder.execute().await?.iter().map(|i| i.try_into()).filter_map(Result::ok).collect();
     //     Ok(accounts)
     // }
-    pub async fn query(&self, query: &str) -> Result<Vec<IonValue>, Error> {
-        let mut builder = self.client.read_query(query).await?;
+    pub async fn query(&self, query_str: &str) -> Result<Vec<IonValue>, Error> {
+        let mut builder = self.client.read_query(query_str).await?;
         let results = builder.execute().await?;
         Ok(results)
     }
+
+    pub async fn delete(&self, query_str: &str) -> Result<Vec<String>, Error> {
+        let results = self.client
+        .transaction_within(|client| async move {   
+            let results = client
+                .query(query_str)
+                .execute()
+                .await?;
+            Ok(results)
+        }).await?;
+
+        if results.len() == 0 {
+            Err(Error::NoRowsAffected)
+        } else {
+            let mut doc_ids = Vec::new();
+            for result in &results {
+                let map: HashMap<String, IonValue> = result.try_into().unwrap();
+                let document_id: String = map.get("documentId").unwrap().try_into()?;
+                doc_ids.push(document_id);
+            }
+
+            Ok(doc_ids)
+        }
+    }
+
 }
