@@ -1,0 +1,21 @@
+[package]
+name = "bank"
+version = "0.1.0"
+authors = ["Samuel Fatoki <samfatoks@gmail.com>"]
+description = "A basic bank"
+repository = "https://github.com/Couragium/interview-test-samuel-fatoki"
+license = "MIT"
+edition = "2018"
+
+[dependencies]
+log = "0.4"
+env_logger = "0.7"
+serde = { version = "1.0.104", features = ["derive"] }
+serde_json = "1.0.42"
+qldb = "0.4.1"
+tokio = { version = "0.2", default-features = false, features = [ "macros", "rt-threaded"] }
+ion-binary-rs = "0.7.0"
+bigdecimal = "0.2.0"
+rand = "0.7.3"
+toml = "0.5.5"
+chrono = "0.4"
