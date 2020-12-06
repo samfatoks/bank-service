@@ -1,10 +1,8 @@
 mod account;
-mod status;
 mod transaction;
 mod app_state;
 
-pub use status::Status;
-pub use transaction::{Transaction, TransactionType, NewTransaction};
+pub use transaction::{TransactionType, NewTransaction};
 pub use account::{Account, NewAccount};
 pub use app_state::AppState;
 

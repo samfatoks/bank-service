@@ -17,7 +17,6 @@ pub enum ErrorType {
     InsufficientBalance,
     AccountNotFound(String),
     NoRowsAffected,
-    WebError(u16),
     PayloadError,
 }
 
@@ -52,13 +51,11 @@ impl AppError {
             AppError {
                 message: None,
                 error_type: e,
-            } => e.to_string(),
-            _ => "An unexpected error has occured".to_string(),
+            } => e.to_string()
         }
     }
     fn error_type(&self) -> String {
         let error = match self.error_type {
-            ErrorType::WebError(_) => "Web Error",
             ErrorType::InsufficientBalance | ErrorType::AccountNotFound(_) => "Transaction Error",
             ErrorType::PayloadError => "Payload Error",
             ErrorType::AccountError(_) => "Account Error",
@@ -141,7 +138,6 @@ pub struct AppErrorResponse {
 impl ResponseError for AppError {
     fn status_code(&self) -> StatusCode {
         match self.error_type {
-            ErrorType::WebError(code) => StatusCode::from_u16(code).unwrap(),
             ErrorType::InsufficientBalance => StatusCode::BAD_REQUEST,
             ErrorType::PayloadError => StatusCode::BAD_REQUEST,
             ErrorType::AccountNotFound(_) => StatusCode::NOT_FOUND,
