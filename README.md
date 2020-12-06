@@ -2,6 +2,7 @@
 ### Assumptions
 * Production calls to QLDB should be a lot faster. Therefore, I'm making multiple calls per each transactional operation to make it closer to a real world app.
 * I’m using a 10 digit account number to represent the unique identifier that is known to the user(Buyers/Sellers). This is modeled after the 10 account number assigned by Nigerian banks.
+* Amount is stored on ledger in the major currency form (not minor or cents).
 
 ### Good Practices
 * Central error management for the application - This is made possible by the capabilities of the Rust language.
