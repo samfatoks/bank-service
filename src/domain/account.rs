@@ -34,15 +34,6 @@ impl Account {
         }
     }
 
-    // pub fn add(mut self, val: BigDecimal) -> Account {
-    //     self.balance = self.balance + val;
-    //     self
-    // }
-    pub fn add(mut self, val: &str) -> Account {
-        self.balance = self.balance + BigDecimal::from_str(val).unwrap().with_scale(2);
-        self
-    }
-
     pub fn from_ions(result: Vec<IonValue>) -> Vec<Self> {
         result.iter().map(|i| i.try_into()).filter_map(Result::ok).collect()
     }
@@ -56,7 +47,6 @@ impl Display for Account {
 }
 
 impl QldbInsertable for Account {
-    //type Output = Account;
     fn table_name(&self) -> &str {
         TABLE_NAME
     }
