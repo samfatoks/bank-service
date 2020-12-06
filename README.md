@@ -42,6 +42,7 @@ In the project root directory, type the command below to run </br>
 cargo run
 ```
 Change the *http_port* and *ledger_name* in the configuration file (Config.toml) as you see fit.
+Default Base URL: http://locathost:8080
 
 ### Rest Endpoints
 1. `GET /account` - get all accounts
@@ -59,7 +60,7 @@ Change the *http_port* and *ledger_name* in the configuration file (Config.toml)
 }
 ```
 
-### **Debit** Payload for Transaction endpoint (/transaction)
+### Debit Payload for Transaction endpoint (/transaction)
 ```json
 {
 	"amount": "50",
@@ -68,7 +69,7 @@ Change the *http_port* and *ledger_name* in the configuration file (Config.toml)
 }
 ```
 
-### **Credit** Payload for Transaction endpoint (/transaction)
+### Credit Payload for Transaction endpoint (/transaction)
 ```json
 {
 	"amount": "100",
@@ -77,7 +78,7 @@ Change the *http_port* and *ledger_name* in the configuration file (Config.toml)
 }
 ```
 
-### **Transfer** Payload for Transaction endpoint (/transaction)
+### Transfer Payload for Transaction endpoint (/transaction)
 ```json
 {
 	"amount": "50",
