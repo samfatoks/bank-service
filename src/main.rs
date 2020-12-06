@@ -17,9 +17,6 @@ use std::str::FromStr;
 
 
 use std::{env, process};
-// use qldb::QLDBClient;
-// use std::collections::HashMap;
-// use ion_binary_rs::{IonEncoder, IonParser, IonValue};
 
 #[tokio::main]
 async fn main() {
@@ -28,13 +25,12 @@ async fn main() {
 
     const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
     const NAME: Option<&'static str> = option_env!("CARGO_PKG_NAME");
-    info!("{} v{}", NAME.unwrap_or("Crawler"), VERSION.unwrap_or("0.1.0"));
+    info!("{} v{}", NAME.unwrap_or("Bank"), VERSION.unwrap_or("0.1.0"));
 
     let config: Config = Config::load().unwrap_or_else(|err| {
         error!("Config Error: {}", err);
         process::exit(1);
     });
-
 
     if let Err(err) =  run(config).await {
         error!("{}", err);
