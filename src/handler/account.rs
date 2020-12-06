@@ -20,8 +20,8 @@ pub async fn get_account(config: web::Data<Config>, path: web::Path<String>) -> 
     let ledger_name = &config.ledger_name;
     let account_number = path.into_inner();
     let account_service = AccountService::new(ledger_name.clone()).await?;
-    let accounts = account_service.find_account(account_number).await?;
-    Ok(HttpResponse::Ok().json(accounts))
+    let account = account_service.find_account(account_number).await?;
+    Ok(HttpResponse::Ok().json(account))
 }
 
 pub async fn delete_account(config: web::Data<Config>, path: web::Path<String>) -> HandlerResult {

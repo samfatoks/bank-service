@@ -59,7 +59,7 @@ impl AppError {
     fn error_type(&self) -> String {
         let error = match self.error_type {
             ErrorType::WebError(_) => "Web Error",
-            ErrorType::InsufficientBalance | ErrorType::AccountNotFound(_) => "Account Error",
+            ErrorType::InsufficientBalance | ErrorType::AccountNotFound(_) => "Transaction Error",
             ErrorType::PayloadError => "Payload Error",
             ErrorType::AccountError(_) => "Account Error",
             _ => "Platform Error",

@@ -9,7 +9,7 @@ mod util;
 mod handler;
 
 
-use domain::NewAccount;
+use domain::{NewAccount, NewTransaction};
 use util::Config;
 use error::AppError;
 
@@ -54,7 +54,18 @@ async fn main() -> std::io::Result<()> {
                                 .route(web::get().to(handler::account::get_account))
                                 .route(web::delete().to(handler::account::delete_account)),
                         ),
+                        
                 )
+                .service(
+                web::scope("/transaction")
+                        .service(
+                            web::resource("")
+                                .app_data(web::Json::<NewTransaction>::configure(|cfg| {
+                                    cfg.error_handler(|err, _req| AppError::from(err).into())
+                                }))
+                                .route(web::post().to(handler::transaction::handle_transaction))
+                        )
+                ),
             )
     })
     .bind(format!("0.0.0.0:{}", http_port))

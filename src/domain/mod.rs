@@ -3,8 +3,8 @@ mod status;
 mod transaction;
 
 pub use status::Status;
-pub use transaction::{Transaction, TransactionType};
-pub use account::{Account, NewAccount};
+pub use transaction::{Transaction, TransactionType, NewTransaction};
+pub use account::{Account, NewAccount,};
 
 use std::collections::HashMap;
 use ion_binary_rs::IonValue;

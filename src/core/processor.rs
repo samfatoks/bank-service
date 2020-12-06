@@ -83,7 +83,8 @@ impl QldbProcessor {
                 }
                 let new_bal = match transaction_type {
                     TransactionType::CREDIT => balance + amount.clone(),
-                    TransactionType::DEBIT => balance - amount.clone()
+                    TransactionType::DEBIT => balance - amount.clone(),
+                    _ => balance
                 };
                 let zero: BigDecimal = 0u32.into();
                 if new_bal < zero {
@@ -98,7 +99,8 @@ impl QldbProcessor {
                     
                       let msg_bits = match transaction_type {
                           TransactionType::CREDIT => ("credited", "to"),
-                          TransactionType::DEBIT => ("debited", "from")
+                          TransactionType::DEBIT => ("debited", "from"),
+                          _ => ("transferred", "between")
                       };
                       let message = format!("Successfully {} ${} {} {}", msg_bits.0, amount, msg_bits.1, account_number);
                       Ok(message)
@@ -107,12 +109,12 @@ impl QldbProcessor {
         Ok(results)
     }
 
-    pub async fn transfer(&self, src_account_number: String, dst_account_number: String, amount: BigDecimal) -> Result<String, AppError> {
+    pub async fn transfer(&self, sender_account_number: String, recipient_account_number: String, amount: BigDecimal) -> Result<String, AppError> {
         let results= self.client
         .transaction_within(|client| async move {   
             let src_balance_results = client
                 .query("SELECT balance FROM bank_accounts b WHERE b.account_number = ?")
-                .param(IonValue::String(src_account_number.clone()))
+                .param(IonValue::String(sender_account_number.clone()))
                 .execute()
                 .await?;
  
@@ -129,7 +131,7 @@ impl QldbProcessor {
             } else {
                 let dst_balance_results = client
                     .query("SELECT balance FROM bank_accounts b WHERE b.account_number = ?")
-                    .param(IonValue::String(dst_account_number.clone()))
+                    .param(IonValue::String(recipient_account_number.clone()))
                     .execute()
                     .await?;
     
@@ -144,18 +146,18 @@ impl QldbProcessor {
                 client
                     .query("UPDATE bank_accounts SET balance = ? WHERE account_number = ?")
                     .param(IonValue::Decimal(new_src_bal))
-                    .param(IonValue::String(src_account_number.clone()))
+                    .param(IonValue::String(sender_account_number.clone()))
                     .execute()
                     .await?;
 
                 client
                     .query("UPDATE bank_accounts SET balance = ? WHERE account_number = ?")
                     .param(IonValue::Decimal(new_dst_bal))
-                    .param(IonValue::String(dst_account_number.clone()))
+                    .param(IonValue::String(recipient_account_number.clone()))
                     .execute()
                     .await?;
 
-                let message = format!("Successfully trasferred ${} from {} to {}", amount, src_account_number, dst_account_number);
+                let message = format!("Successfully trasferred ${} from {} to {}", amount, sender_account_number, recipient_account_number);
                 Ok(message)
             }
         }).await?;

@@ -1,6 +1,5 @@
-use crate::{Config, core::QldbProcessor};
-use crate::domain::{Account, NewAccount, TransactionType};
-use bigdecimal::BigDecimal;
+use crate::{core::QldbProcessor};
+use crate::domain::{Account, NewAccount};
 use std::convert::TryInto;
 use crate::error::{AppError, ErrorType};
 
@@ -19,32 +18,6 @@ impl AccountService {
         let document_id = self.processor.insert(&account).await?;
         Ok((document_id, account))
     }
-
-    pub async fn transfer(&self, src_account_number: String, dst_account_number: String, amount: BigDecimal) -> Result<String, AppError> {
-        let message = self.processor.transfer(src_account_number, dst_account_number, amount.clone()).await?;
-        if message == "INSUFFICIENT_BALANCE" {
-            Err(AppError::from_type(ErrorType::InsufficientBalance))
-        } else {
-            Ok(message)
-        }
-    }
-
-    pub async fn credit(&self, account_number: String, amount: BigDecimal) -> Result<String, AppError> {
-        let message = self.processor.debit_credit(account_number.clone(), amount.clone(), TransactionType::CREDIT).await?;
-        info!("Successfully credited ${} to {}", amount, account_number);
-        Ok(message)
-    }
-
-    pub async fn debit(&self, account_number: String, amount: BigDecimal) -> Result<String, AppError> {
-        let message = self.processor.debit_credit(account_number, amount.clone(), TransactionType::DEBIT).await?;
-        if message == "INSUFFICIENT_BALANCE" {
-            Err(AppError::from_type(ErrorType::InsufficientBalance))
-        } else {
-            Ok(message)
-        }
-    }
-
-
 
     pub async fn find_account(&self, account_number: String) -> Result<Account, AppError> {
         let query_str = format!("SELECT * FROM bank_accounts b WHERE b.account_number = '{}'", account_number);
