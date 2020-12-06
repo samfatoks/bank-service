@@ -27,7 +27,7 @@ impl fmt::Display for Error {
             Error::Custom(message) => write!(f, "Error: {}", message),
             Error::SerdeError(ref err) => write!(f, "Error: {}", err),
             Error::InvalidCommand => write!(f, "Invalid request command"),
-            Error::InsufficientFunds(amount) => write!(f, "Insufficient funds in account - {}", amount),
+            Error::InsufficientFunds(amount) => write!(f, "Insufficient funds in account"),
             Error::Unsupported(s) => write!(f, "Not supported"),
             Error::IonError(s) => write!(f, "Ion Parser Error: {}", s),
             Error::QLDBError(s) => write!(f, "QLDB Error: {}", s),

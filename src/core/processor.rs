@@ -1,8 +1,9 @@
+use bigdecimal::BigDecimal;
 use qldb::QLDBClient;
 use std::collections::HashMap;
 use ion_binary_rs::IonValue;
 use crate::Config;
-use crate::domain::QldbInsertable;
+use crate::domain::{QldbInsertable, TransactionType};
 use std::convert::TryInto;
 use crate::error::Error;
 
@@ -62,11 +63,6 @@ impl QldbProcessor {
         Ok(())
     }
 
-    // pub async fn query(&self, query: &str) -> Result<Vec<Account>, Box<dyn std::error::Error>> {
-    //     let mut builder = self.client.read_query(query).await?;
-    //     let accounts: Vec<Account> = builder.execute().await?.iter().map(|i| i.try_into()).filter_map(Result::ok).collect();
-    //     Ok(accounts)
-    // }
     pub async fn query(&self, query_str: &str) -> Result<Vec<IonValue>, Error> {
         let mut builder = self.client.read_query(query_str).await?;
         let results = builder.execute().await?;
@@ -96,5 +92,66 @@ impl QldbProcessor {
             Ok(doc_ids)
         }
     }
+
+    pub async fn update_balance(&self, account_number: String, amount: BigDecimal, transaction_type: TransactionType) -> Result<String, Error> {
+
+        // let account_number = IonValue::String(account_number);
+        let results= self.client
+        .transaction_within(|client| async move {   
+            //let find_query_str = format!("SELECT balance FROM bank_accounts b WHERE b.account_number = '{}'", account_number);
+            // let update_query_str = format!("UPDATE bank_accounts SET balance = ? WHERE account_number = ?");
+
+            let select_results = client
+                .query("SELECT balance FROM bank_accounts b WHERE b.account_number = ?")
+                .param(IonValue::String(account_number.clone()))
+                .execute()
+                .await?;
+            let result = if select_results.len() == 0 {
+                Err(Error::NoRowsAffected)
+            } else {
+                let select_result = select_results[0].clone();
+                let map: HashMap<String, IonValue> = select_result.try_into().unwrap();
+                
+                if let IonValue::Decimal(bal) = map.get("balance").unwrap() {
+
+                    let new_bal = match transaction_type {
+                        TransactionType::CREDIT => bal + amount,
+                        TransactionType::DEBIT => bal - amount
+                    };
+                    let zero: BigDecimal = 0u32.into();
+                    if new_bal < zero {
+                        Ok("0".to_string())
+                    } else {
+                        let update_results = client
+                            .query("UPDATE bank_accounts SET balance = ? WHERE account_number = ?")
+                            .param(IonValue::Decimal(new_bal))
+                            .param(IonValue::String(account_number))
+                            .execute()
+                            .await?;
+                        info!("{:?}", update_results);
+                        if update_results.len() == 0 {
+                            Err(Error::NoRowsAffected)
+                        } else {
+                            let result = &update_results[0];
+                            let map: HashMap<String, IonValue> = result.try_into().unwrap();
+                            let document_id: String = map.get("documentId").unwrap().try_into().unwrap();
+                            Ok(document_id)
+                        }
+                    }
+                } else {
+                    Err(Error::Custom("Unbale to parse balance".to_string()))
+                }
+            };
+            Ok(result.unwrap())
+        }).await?;
+        Ok(results)
+    }
+
+    // fn get_doc_id(results: Vec<IonValue>) -> Result<String, Error> {
+    //     let result = &results[0];
+    //     let map: HashMap<String, IonValue> = result.try_into().unwrap();
+    //     let document_id: String = map.get("documentId").unwrap().try_into()?;
+    //     Ok(document_id)
+    // }
 
 }

@@ -42,7 +42,7 @@ async fn main() {
 }
 pub async fn run(config: Config) -> Result<(), Error> {
     let bank_service = BankService::new(config).await?;
-    // for i in 1..=5 {
+    // for i in 1..=3 {
     //     let doc_id = bank_service.create_account("Omokunmi Fatoki".to_string(), "07062075792".to_string()).await?;
     //     info!("Account: {} -> {}", i, doc_id);
     // }
@@ -50,15 +50,24 @@ pub async fn run(config: Config) -> Result<(), Error> {
     // let accounts = bank_service.find_accounts().await?;
     // for account in accounts {
     //     info!("{}", account);
+    //     // let doc_id = bank_service.delete_account(account.account_number.clone()).await?;
+    //     // info!("Successfully deleted account: {}, docID: {}", account.account_number, doc_id);
     // }
 
-    let account = bank_service.find_account("1601783131".to_string()).await?;
+    
+
+    let account = bank_service.find_account("6436489976".to_string()).await?;
     info!("{}", account);
-    let doc_id = bank_service.delete_account(account.account_id).await?;
-    info!("Successfully deleted account: {}, docID: {}", "1601783131", doc_id);
-    // let account_id = "12345678".to_string();
+    let amount: BigDecimal = BigDecimal::from_str("500.0").unwrap();
+    let result = bank_service.credit(account.account_number, amount).await?;
+    info!("ID: {}", result);
+    let account = bank_service.find_account("6436489976".to_string()).await?;
+    info!("{}", account);
+    // let doc_id = bank_service.delete_account(account.account_number).await?;
+    // info!("Successfully deleted account: {}, docID: {}", "1601783131", doc_id);
+    // let account_number = "12345678".to_string();
     // let amount: BigDecimal = BigDecimal::from_str("35.8").unwrap();
-    // bank_service.debit(account_id, amount).await?;
+    // bank_service.debit(account_number, amount).await?;
 
 
     // let mut account = Account::new("Samuel Fatoki".to_string(), "07039645560".to_string());

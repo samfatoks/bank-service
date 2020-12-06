@@ -4,7 +4,7 @@ mod status;
 mod transaction;
 
 pub use status::Status;
-pub use transaction::Transaction;
+pub use transaction::{Transaction, TransactionType};
 pub use command::Command;
 pub use account::Account;
 

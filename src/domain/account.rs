@@ -12,7 +12,7 @@ use crate::util::rand_util;
 const TABLE_NAME: &str = "bank_accounts";
 #[derive(Debug)]
 pub struct Account {
-    pub account_id: String,
+    pub account_number: String,
     pub name: String,
     pub phone: String,
     pub balance: BigDecimal,
@@ -22,10 +22,10 @@ pub struct Account {
 
 impl Account {
     pub fn new(name: String, phone: String) -> Account {
-        let account_id = rand_util::generate_numeric(10).unwrap();
+        let account_number = rand_util::generate_numeric(10).unwrap();
         let now: DateTime<FixedOffset> = Utc::now().into();
         Account {
-            account_id,
+            account_number,
             name,
             phone,
             balance: BigDecimal::default(),
@@ -50,8 +50,8 @@ impl Account {
 
 impl Display for Account {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), FmtError> {
-        write!(f, "Account {{ account_id: {}, name: {}, phone: {}, balance: {}, created_at: {}, updated_at: {} }}", 
-        self.account_id, self.name, self.phone, self.balance, self.created_at, self.updated_at)
+        write!(f, "Account {{ account_number: {}, name: {}, phone: {}, balance: {}, created_at: {}, updated_at: {} }}", 
+        self.account_number, self.name, self.phone, self.balance, self.created_at, self.updated_at)
     }
 }
 
@@ -63,7 +63,7 @@ impl QldbInsertable for Account {
 
     fn to_params(&self) -> HashMap<String, IonValue> {
         let mut params = HashMap::new();
-        params.insert("account_id".to_string(), IonValue::String(self.account_id.to_string()));
+        params.insert("account_number".to_string(), IonValue::String(self.account_number.to_string()));
         params.insert("name".to_string(), IonValue::String(self.name.to_string()));
         params.insert("phone".to_string(), IonValue::String(self.phone.to_string()));
         params.insert("balance".to_string(), IonValue::Decimal(self.balance.clone()));
@@ -79,7 +79,7 @@ impl TryFrom<&IonValue> for Account {
     fn try_from(value: &IonValue) -> Result<Self, Self::Error> {
         let map: HashMap<String, IonValue> = value.try_into().unwrap();
 
-        let account_id: String = map.get("account_id").unwrap().try_into()?;
+        let account_number: String = map.get("account_number").unwrap().try_into()?;
         let name: String = map.get("name").unwrap().try_into()?;
         let phone: String = map.get("phone").unwrap().try_into()?;
         let mut balance = BigDecimal::default();
@@ -89,7 +89,7 @@ impl TryFrom<&IonValue> for Account {
         let created_at: DateTime<FixedOffset> = map.get("created_at").unwrap().try_into()?;
         let updated_at: DateTime<FixedOffset> = map.get("updated_at").unwrap().try_into()?;
         let account = Account {
-                account_id: account_id,
+                account_number: account_number,
                 name: name,
                 phone: phone,
                 balance: balance,
