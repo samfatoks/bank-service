@@ -11,7 +11,7 @@ mod util;
 use error::Error;
 use bigdecimal::BigDecimal;
 use domain::Account;
-use service::BankService;
+use service::AccountService;
 use util::Config;
 use std::str::FromStr;
 
@@ -41,7 +41,7 @@ async fn main() {
     }
 }
 pub async fn run(config: Config) -> Result<(), Error> {
-    let bank_service = BankService::new(config).await?;
+    let bank_service = AccountService::new(config).await?;
     // for i in 1..=3 {
     //     let doc_id = bank_service.create_account("Omokunmi Fatoki".to_string(), "07062075792".to_string()).await?;
     //     info!("Account: {} -> {}", i, doc_id);

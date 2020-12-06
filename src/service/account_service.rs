@@ -3,14 +3,14 @@ use bigdecimal::BigDecimal;
 use std::convert::TryInto;
 use crate::error::Error;
 
-pub struct BankService {
+pub struct AccountService {
     processor: QldbProcessor
 }
 
-impl BankService {
-    pub async fn new(config: Config) -> Result<BankService, Error>  {
+impl AccountService {
+    pub async fn new(config: Config) -> Result<AccountService, Error>  {
         let processor = QldbProcessor::new(config).await?;
-        Ok(BankService { processor })
+        Ok(AccountService { processor })
     }
 
     pub async fn create_account(&self, name: String, phone: String) -> Result<String, Error>{
