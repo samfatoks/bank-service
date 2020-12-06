@@ -19,27 +19,31 @@ impl AccountService {
         Ok(document_id)
     }
 
-    pub async fn transfer(&self, src_account_number: String, dst_account_number: String, amount: BigDecimal) -> Result<(), Error> {
-        info!("Successfully trasferred ${} from {} to {}", amount, src_account_number, dst_account_number);
-        Ok(())
-    }
-
-    pub async fn debit(&self, account_number: String, amount: BigDecimal) -> Result<String, Error> {
-        let result = self.processor.update_balance(account_number, amount.clone(), TransactionType::DEBIT).await?;
-        info!("RESULT: {}", result);
-        if result == "0" {
-            Err(Error::InsufficientFunds(amount))
+    pub async fn transfer(&self, src_account_number: String, dst_account_number: String, amount: BigDecimal) -> Result<String, Error> {
+        let message = self.processor.transfer(src_account_number, dst_account_number, amount.clone()).await?;
+        if message == "INSUFFICIENT_BALANCE" {
+            Err(Error::InsufficientBalance(amount))
         } else {
-            // info!("Successfully debited ${} from {}", amount, account_number);
-            Ok(result)
+            Ok(message)
         }
     }
 
     pub async fn credit(&self, account_number: String, amount: BigDecimal) -> Result<String, Error> {
-        let result = self.processor.update_balance(account_number.clone(), amount.clone(), TransactionType::CREDIT).await?;
+        let message = self.processor.debit_credit(account_number.clone(), amount.clone(), TransactionType::CREDIT).await?;
         info!("Successfully credited ${} to {}", amount, account_number);
-        Ok(result)
+        Ok(message)
     }
+
+    pub async fn debit(&self, account_number: String, amount: BigDecimal) -> Result<String, Error> {
+        let message = self.processor.debit_credit(account_number, amount.clone(), TransactionType::DEBIT).await?;
+        if message == "INSUFFICIENT_BALANCE" {
+            Err(Error::InsufficientBalance(amount))
+        } else {
+            Ok(message)
+        }
+    }
+
+
 
     pub async fn find_account(&self, account_number: String) -> Result<Account, Error> {
         let query_str = format!("SELECT * FROM bank_accounts b WHERE b.account_number = '{}'", account_number);

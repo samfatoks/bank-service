@@ -66,7 +66,7 @@ impl QldbProcessor {
         }
     }
 
-    pub async fn update_balance(&self, account_number: String, amount: BigDecimal, transaction_type: TransactionType) -> Result<String, Error> {
+    pub async fn debit_credit(&self, account_number: String, amount: BigDecimal, transaction_type: TransactionType) -> Result<String, Error> {
         let results= self.client
         .transaction_within(|client| async move {   
             let select_results = client
@@ -74,90 +74,91 @@ impl QldbProcessor {
                 .param(IonValue::String(account_number.clone()))
                 .execute()
                 .await?;
-            let result = if select_results.len() == 0 {
-                Err(Error::NoRowsAffected)
-            } else {
+
                 let select_result = select_results[0].clone();
                 let map: HashMap<String, IonValue> = select_result.try_into().unwrap();
                 
+                let mut balance = BigDecimal::default();
                 if let IonValue::Decimal(bal) = map.get("balance").unwrap() {
-
-                    let new_bal = match transaction_type {
-                        TransactionType::CREDIT => bal + amount,
-                        TransactionType::DEBIT => bal - amount
-                    };
-                    let zero: BigDecimal = 0u32.into();
-                    if new_bal < zero {
-                        Ok("0".to_string())
-                    } else {
-                        let update_results = client
-                            .query("UPDATE bank_accounts SET balance = ? WHERE account_number = ?")
-                            .param(IonValue::Decimal(new_bal))
-                            .param(IonValue::String(account_number))
-                            .execute()
-                            .await?;
-                        if update_results.len() == 0 {
-                            Err(Error::NoRowsAffected)
-                        } else {
-                            let result = &update_results[0];
-                            let map: HashMap<String, IonValue> = result.try_into().unwrap();
-                            let document_id: String = map.get("documentId").unwrap().try_into().unwrap();
-                            Ok(document_id)
-                        }
-                    }
-                } else {
-                    Err(Error::Custom("Unbale to parse balance".to_string()))
+                    balance = bal.clone();
                 }
-            };
-            Ok(result.unwrap())
+                let new_bal = match transaction_type {
+                    TransactionType::CREDIT => balance + amount.clone(),
+                    TransactionType::DEBIT => balance - amount.clone()
+                };
+                let zero: BigDecimal = 0u32.into();
+                if new_bal < zero {
+                    Ok("INSUFFICIENT_BALANCE".to_string())
+                } else {
+                    client
+                        .query("UPDATE bank_accounts SET balance = ? WHERE account_number = ?")
+                        .param(IonValue::Decimal(new_bal))
+                        .param(IonValue::String(account_number.clone()))
+                        .execute()
+                        .await?;
+                    
+                      let msg_bits = match transaction_type {
+                          TransactionType::CREDIT => ("credited", "to"),
+                          TransactionType::DEBIT => ("debited", "from")
+                      };
+                      let message = format!("Successfully {} ${} {} {}", msg_bits.0, amount, msg_bits.1, account_number);
+                      Ok(message)
+                }
         }).await?;
         Ok(results)
     }
 
-    pub async fn transfer(&self, account_number: String, amount: BigDecimal, transaction_type: TransactionType) -> Result<String, Error> {
+    pub async fn transfer(&self, src_account_number: String, dst_account_number: String, amount: BigDecimal) -> Result<String, Error> {
         let results= self.client
         .transaction_within(|client| async move {   
-            let select_results = client
+            let src_balance_results = client
                 .query("SELECT balance FROM bank_accounts b WHERE b.account_number = ?")
-                .param(IonValue::String(account_number.clone()))
+                .param(IonValue::String(src_account_number.clone()))
                 .execute()
                 .await?;
-            let result = if select_results.len() == 0 {
-                Err(Error::NoRowsAffected)
+ 
+            let src_balance_result = src_balance_results[0].clone();
+            let map: HashMap<String, IonValue> = src_balance_result.try_into().unwrap();
+            let mut src_balance = BigDecimal::default();
+            if let IonValue::Decimal(bal) = map.get("balance").unwrap() {
+                src_balance = bal.clone();
+            }
+            let new_src_bal = src_balance - amount.clone();
+            let zero: BigDecimal = 0u32.into();
+            if new_src_bal < zero {
+                Ok("INSUFFICIENT_BALANCE".to_string())
             } else {
-                let select_result = select_results[0].clone();
-                let map: HashMap<String, IonValue> = select_result.try_into().unwrap();
-                
+                let dst_balance_results = client
+                    .query("SELECT balance FROM bank_accounts b WHERE b.account_number = ?")
+                    .param(IonValue::String(dst_account_number.clone()))
+                    .execute()
+                    .await?;
+    
+                let dst_balance_result = dst_balance_results[0].clone();
+                let map: HashMap<String, IonValue> = dst_balance_result.try_into().unwrap();
+                let mut dst_balance = BigDecimal::default();
                 if let IonValue::Decimal(bal) = map.get("balance").unwrap() {
-
-                    let new_bal = match transaction_type {
-                        TransactionType::CREDIT => bal + amount,
-                        TransactionType::DEBIT => bal - amount
-                    };
-                    let zero: BigDecimal = 0u32.into();
-                    if new_bal < zero {
-                        Ok("0".to_string())
-                    } else {
-                        let update_results = client
-                            .query("UPDATE bank_accounts SET balance = ? WHERE account_number = ?")
-                            .param(IonValue::Decimal(new_bal))
-                            .param(IonValue::String(account_number))
-                            .execute()
-                            .await?;
-                        if update_results.len() == 0 {
-                            Err(Error::NoRowsAffected)
-                        } else {
-                            let result = &update_results[0];
-                            let map: HashMap<String, IonValue> = result.try_into().unwrap();
-                            let document_id: String = map.get("documentId").unwrap().try_into().unwrap();
-                            Ok(document_id)
-                        }
-                    }
-                } else {
-                    Err(Error::Custom("Unbale to parse balance".to_string()))
+                    dst_balance = bal.clone();
                 }
-            };
-            Ok(result.unwrap())
+                let new_dst_bal = dst_balance + amount.clone();
+
+                client
+                    .query("UPDATE bank_accounts SET balance = ? WHERE account_number = ?")
+                    .param(IonValue::Decimal(new_src_bal))
+                    .param(IonValue::String(src_account_number.clone()))
+                    .execute()
+                    .await?;
+
+                client
+                    .query("UPDATE bank_accounts SET balance = ? WHERE account_number = ?")
+                    .param(IonValue::Decimal(new_dst_bal))
+                    .param(IonValue::String(dst_account_number.clone()))
+                    .execute()
+                    .await?;
+
+                let message = format!("Successfully trasferred ${} from {} to {}", amount, src_account_number, dst_account_number);
+                Ok(message)
+            }
         }).await?;
         Ok(results)
     }
