@@ -1,30 +1,87 @@
-Hello, 
+## Rust Bank Service
+### Assumptions
+* Production calls to QLDB should be a lot faster. Therefore, I'm making multiple calls per each transactional operation to make it closer to a real world app.
+* I’m using a 10 digit account number to represent the unique identifier that is known to the user(Buyers/Sellers). This is modeled after the 10 account number assigned by Nigerian banks.
 
-We are very happy on the prospect of working with you. Before continuing forward with the hiring process, we would like to have a technical test in order to evaluate your programming skills. We are looking forward to seeing how you develop this test!   
+### Good Practices
+* Central error management for the application - This is made possible by the capabilities of the Rust language.
+* Toml based configuration file for easy setup.
+* Handling transaction requests (Credit, Debit, Transfer) with one endpoint but with varying payload field/values.
+* The debit, credit and transfer operations are done within the transaction closure to allow full rollback in case any steps fail. Thanks for your amazing Rust QLDB Driver.
 
-## Instructions
+### Missing features
+The following features are a most have for production applications but are missing in the app due to time constraint.
+* Transaction Logging: Transactions are not currently logged to a transaction table on QLDB.
+* Test - Lacking of unit and integration tests
 
-For this test you will need to implement a Ledger. A ledger is the principal book or computer file for recording and totaling economic transactions measured in terms of a monetary unit. Think of it like the bank with the different bank accounts where you have funds transfers and balance.
+### Core Rust libraries used
+* QLDB Driver - https://github.com/Couragium/qldb-rs
+* Ion Library - https://github.com/Couragium/ion-binary-rs
+* Actix
 
-For your understanding of the use case, this ledger will have 2 accounts groups: 
+### Issues
+* I had problems using using the QLDB ledger created by David so I created a new ledger on my AWS account for the sake of this development.
+* Calls to QLDB is a bit slow. I can attribute the latency partly to the location of the AWS region where I created the QLDB ledger (us-east-1)
 
-- Buyer: Which will mainly send money to sellers.
-- Sellers: Which will mainly receive money from buyers, even concurrently.
+### Setup
+On the QLDB page on AWS management console, perform the following operation:
+1. Create a ledger with name **bank-account-ledger** or any other name. Ensure to use the correct ledger name in the config file (Config.toml)
+2. Create table
+```
+CREATE TABLE bank_accounts
+```
+3. Create index on table
+```
+CREATE INDEX ON bank_accounts (account_number)
+```
 
-Note: _These two groups don't necessarily need to be represented in the data model or code._
+### Run
+In the project root directory, type the command below to run </br>
+```
+cargo run
+```
+Change the *http_port* and *ledger_name* in the configuration file (Config.toml) as you see fit.
 
-It is very important that any account in the Ledger cannot have, under any circumstance, a negative balance. Additionally, it needs to handle considerable concurrent traffic on the same account without failing. 
+### Rest Endpoints
+1. `GET /account` - get all accounts
+2. `GET /account/{account_number}` - get account details by **account_number**
+3. `POST /account` - Create new account. This returns a JSON response including the account_number and default balance of 0.
+4. `DELETE /account/{account_number}` - delete account by **account_number**
+5. `POST /transaction` - Process transaction based on JSON payload.
 
-For this exercise you will only need to implement the transfer between accounts. The transfer can be between any account, not only buyers and sellers.
 
-The Ledger will be implemented as an HTTP service and will use Amazon's QLDB. You will be provided an Amazon AWS credentials with access to a QLDB instance. 
+### New account payload (/account)
+```json
+{
+	"name": "Sam James",
+	"phone": "2347038657970"
+}
+```
 
-We will look at the process and the final code, so provide git commits of the process during the development.
- 
-We will need to run the code in order to test it. Provide clear instructions for it.
+### **Debit** Payload for Transaction endpoint (/transaction)
+```json
+{
+	"amount": "50",
+	"recipient_account_number": "565656565",
+	"transaction_type": "DEBIT"
+}
+```
 
-You are free to choose, for the implementation, any programming language from this list: Typescript, Rust, Java, Go, Python, C++
+### **Credit** Payload for Transaction endpoint (/transaction)
+```json
+{
+	"amount": "100",
+	"recipient_account_number": "565656565",
+	"transaction_type": "CREDIT"
+}
+```
 
-And finally, explain the good practices used on this code and the reasons for the chosen internal design as well as any possible problem/concern that may arise because of the chosen design.
-
-Good luck!
+### **Transfer** Payload for Transaction endpoint (/transaction)
+```json
+{
+	"amount": "50",
+	"recipient_account_number": "565656565",
+	"sender_account_number": "3971240165",
+	"transaction_type": "TRANSFER"
+}
+```
