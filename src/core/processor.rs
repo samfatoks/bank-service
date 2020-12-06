@@ -2,24 +2,23 @@ use bigdecimal::BigDecimal;
 use qldb::QLDBClient;
 use std::collections::HashMap;
 use ion_binary_rs::IonValue;
-use crate::Config;
 use crate::domain::{QldbInsertable, TransactionType};
 use std::convert::TryInto;
-use crate::error::Error;
+use crate::error::{AppError, ErrorType};
 
 pub struct QldbProcessor {
     client: QLDBClient,
 }
 
 impl QldbProcessor {
-    pub async fn new(config: Config) -> Result<Self, Error> {
-        let client = QLDBClient::default(&config.ledger_name).await?;
+    pub async fn new(ledger_name: String) -> Result<Self, AppError> {
+        let client = QLDBClient::default(&ledger_name).await?;
         Ok(QldbProcessor {
             client
         })
     }
 
-    pub async fn insert<I: QldbInsertable>(&self, model: &I) -> Result<String, Error> {
+    pub async fn insert<I: QldbInsertable>(&self, model: &I) -> Result<String, AppError> {
         let results = self.client
         .transaction_within(|client| async move {   
             let results = client
@@ -36,13 +35,13 @@ impl QldbProcessor {
         Ok(document_id)
     }
 
-    pub async fn query(&self, query_str: &str) -> Result<Vec<IonValue>, Error> {
+    pub async fn query(&self, query_str: &str) -> Result<Vec<IonValue>, AppError> {
         let mut builder = self.client.read_query(query_str).await?;
         let results = builder.execute().await?;
         Ok(results)
     }
 
-    pub async fn delete(&self, query_str: &str) -> Result<Vec<String>, Error> {
+    pub async fn delete(&self, query_str: &str) -> Result<Vec<String>, AppError> {
         let results = self.client
         .transaction_within(|client| async move {   
             let results = client
@@ -53,7 +52,7 @@ impl QldbProcessor {
         }).await?;
 
         if results.len() == 0 {
-            Err(Error::NoRowsAffected)
+            Err(AppError::from_type(ErrorType::NoRowsAffected))
         } else {
             let mut doc_ids = Vec::new();
             for result in &results {
@@ -66,7 +65,7 @@ impl QldbProcessor {
         }
     }
 
-    pub async fn debit_credit(&self, account_number: String, amount: BigDecimal, transaction_type: TransactionType) -> Result<String, Error> {
+    pub async fn debit_credit(&self, account_number: String, amount: BigDecimal, transaction_type: TransactionType) -> Result<String, AppError> {
         let results= self.client
         .transaction_within(|client| async move {   
             let select_results = client
@@ -108,7 +107,7 @@ impl QldbProcessor {
         Ok(results)
     }
 
-    pub async fn transfer(&self, src_account_number: String, dst_account_number: String, amount: BigDecimal) -> Result<String, Error> {
+    pub async fn transfer(&self, src_account_number: String, dst_account_number: String, amount: BigDecimal) -> Result<String, AppError> {
         let results= self.client
         .transaction_within(|client| async move {   
             let src_balance_results = client

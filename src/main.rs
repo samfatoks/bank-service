@@ -6,20 +6,18 @@ mod domain;
 mod error;
 mod service;
 mod util;
+mod handler;
 
 
-use error::Error;
-use bigdecimal::BigDecimal;
-use domain::Account;
-use service::AccountService;
+use domain::NewAccount;
 use util::Config;
-use std::str::FromStr;
+use error::AppError;
 
-
+use actix_web::{web, App, FromRequest, HttpServer};
 use std::{env, process};
 
-#[tokio::main]
-async fn main() {
+#[actix_rt::main]
+async fn main() -> std::io::Result<()> {
     env::set_var("RUST_LOG", "info");
     env_logger::builder().format_timestamp_millis().init();
 
@@ -31,51 +29,36 @@ async fn main() {
         error!("Config Error: {}", err);
         process::exit(1);
     });
+    let http_port = config.http_port;
 
-    if let Err(err) =  run(config).await {
-        error!("{}", err);
-    }
-}
-pub async fn run(config: Config) -> Result<(), Error> {
-    let bank_service = AccountService::new(config).await?;
-    // for i in 1..=3 {
-    //     let doc_id = bank_service.create_account("Omokunmi Fatoki".to_string(), "07062075792".to_string()).await?;
-    //     info!("Account: {} -> {}", i, doc_id);
-    // }
-
-    let accounts = bank_service.find_accounts().await?;
-    for account in accounts {
-        info!("{}", account);
-    }
-
-    let amount: BigDecimal = BigDecimal::from_str("36.7").unwrap();
-    let message = bank_service.transfer("6436489976".to_string(), "3721190559".to_string(), amount).await?;
-    info!("{}", message);
-
-    // let account = bank_service.find_account("6436489976".to_string()).await?;
-    // info!("{}", account);
-    // let amount: BigDecimal = BigDecimal::from_str("300.0").unwrap();
-    // let message = bank_service.debit("6436489976".to_string(), amount).await?;
-    // info!("{}", message);
-    // let account = bank_service.find_account("6436489976".to_string()).await?;
-    // info!("{}", account);
-    // let doc_id = bank_service.delete_account(account.account_number).await?;
-    // info!("Successfully deleted account: {}, docID: {}", "1601783131", doc_id);
-    // let account_number = "12345678".to_string();
-    // let amount: BigDecimal = BigDecimal::from_str("35.8").unwrap();
-    // bank_service.debit(account_number, amount).await?;
-
-
-    // let mut account = Account::new("Samuel Fatoki".to_string(), "07039645560".to_string());
-    // account = account.add("12.356");
-    // // info!("{}", account);
-    // qldb_processor.insert(&account).await?;
-    // qldb_processor.insert(&account.add("12.356")).await?;
-
-    let accounts = bank_service.find_accounts().await?;
-    for account in accounts {
-        info!("{}", account);
-    }
-
-    Ok(())
+    HttpServer::new(move || {
+        App::new()
+            .wrap(actix_web::middleware::Logger::new(
+                r#"%a "%r" %s %b "%{Referer}i" "%{User-Agent}i" %D"#,
+            ))
+            .data(config.clone())
+            .wrap(actix_web::middleware::Compress::default())
+            .service(web::scope("/")
+                .service(
+                    web::scope("/account")
+                        .service(
+                            web::resource("")
+                                .app_data(web::Json::<NewAccount>::configure(|cfg| {
+                                    cfg.error_handler(|err, _req| AppError::from(err).into())
+                                }))
+                                .route(web::get().to(handler::account::get_accounts))
+                                .route(web::post().to(handler::account::create_account))
+                        )
+                        .service(
+                            web::resource("/{account_number}")
+                                .route(web::get().to(handler::account::get_account))
+                                .route(web::delete().to(handler::account::delete_account)),
+                        ),
+                )
+            )
+    })
+    .bind(format!("0.0.0.0:{}", http_port))
+    .unwrap()
+    .run()
+    .await
 }

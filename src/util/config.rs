@@ -5,6 +5,7 @@ use std::io::Error;
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     pub ledger_name: String,
+    pub http_port: u32
 }
 
 impl Config {

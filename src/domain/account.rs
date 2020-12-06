@@ -1,22 +1,27 @@
 use bigdecimal::BigDecimal;
-use std::{convert::TryFrom, str::FromStr, convert::TryInto};
+use std::{convert::TryFrom, convert::TryInto};
 use std::fmt::{Display, Formatter, Error as FmtError};
 use std::collections::HashMap;
 use ion_binary_rs::IonValue;
 use chrono::prelude::*;
 
+
+use super::default_datetime;
 use super::QldbInsertable;
-use crate::error::Error;
+use crate::error::AppError;
 use crate::util::rand_util;
+use serde::{Deserialize, Serialize};
 
 const TABLE_NAME: &str = "bank_accounts";
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Account {
     pub account_number: String,
     pub name: String,
     pub phone: String,
     pub balance: BigDecimal,
+    #[serde(skip, default = "default_datetime")]
     pub created_at: DateTime<FixedOffset>,
+    #[serde(skip, default = "default_datetime")]
     pub updated_at: DateTime<FixedOffset>,
 }
 
@@ -28,7 +33,7 @@ impl Account {
             account_number,
             name,
             phone,
-            balance: BigDecimal::default(),
+            balance: BigDecimal::default().with_scale(2),
             created_at: now,
             updated_at: now
         }
@@ -64,7 +69,7 @@ impl QldbInsertable for Account {
 }
 
 impl TryFrom<&IonValue> for Account {
-    type Error = Error;
+    type Error = AppError;
 
     fn try_from(value: &IonValue) -> Result<Self, Self::Error> {
         let map: HashMap<String, IonValue> = value.try_into().unwrap();
@@ -82,10 +87,22 @@ impl TryFrom<&IonValue> for Account {
                 account_number: account_number,
                 name: name,
                 phone: phone,
-                balance: balance,
+                balance: balance.with_scale(2),
                 created_at: created_at,
                 updated_at: updated_at
             };
         Ok(account)
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct NewAccount {
+    pub name: String,
+    pub phone: String
+}
+
+impl Into<Account> for NewAccount {
+    fn into(self) -> Account {
+        Account::new(self.name, self.phone)
     }
 }
