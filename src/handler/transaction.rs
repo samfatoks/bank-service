@@ -1,8 +1,9 @@
 use super::HandlerResult;
-use crate::{Config, domain::TransactionType};
+use crate::domain::{AppState, TransactionType};
 use crate::service::{AccountService, TransferService};
 use crate::error::{AppError, ErrorType};
 use crate::domain::NewTransaction;
+use bigdecimal::BigDecimal;
 use serde_json::json;
 use actix_web::{
     web::{self, Json},
@@ -10,16 +11,21 @@ use actix_web::{
 };
 
 
-pub async fn handle_transaction(config: web::Data<Config>, new_transaction: Json<NewTransaction>) -> HandlerResult {
-    let ledger_name = &config.ledger_name;
+pub async fn handle_transaction(app_state: web::Data<AppState>, new_transaction: Json<NewTransaction>) -> HandlerResult {
     let transaction = new_transaction.into_inner();
+    let amount = transaction.amount;
+    let zero: BigDecimal = 0u32.into();
+    if amount < zero {
+        return Err(AppError::new(Some("Invalid transaction amount".to_string()), ErrorType::PayloadError));
+    }
+
+    
     if transaction.transaction_type == TransactionType::TRANSFER && transaction.sender_account_number.clone().is_none(){
         return Err(AppError::new(Some("sender_account_number cannot be empty for transfer".to_string()), ErrorType::PayloadError));
     }
 
-    let account_service = AccountService::new(ledger_name.clone()).await?;    
-    let amount = transaction.amount;
     let recipient_account_number = transaction.recipient_account_number;
+    let account_service = AccountService::new(app_state.processor.clone());    
     account_service.find_account(recipient_account_number.clone()).await.map_err(|e| {
         match e.error_type {
             ErrorType::AccountNotFound(_) => {
@@ -29,7 +35,7 @@ pub async fn handle_transaction(config: web::Data<Config>, new_transaction: Json
         }
     })?;
 
-    let transfer_service = TransferService::new(ledger_name.clone()).await?;
+    let transfer_service = TransferService::new(app_state.processor.clone());
     let message = match transaction.transaction_type {
         crate::domain::TransactionType::CREDIT => {
             transfer_service.credit(recipient_account_number.clone(), amount).await?

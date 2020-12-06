@@ -8,12 +8,11 @@ pub struct AccountService {
 }
 
 impl AccountService {
-    pub async fn new(ledger_name: String) -> Result<AccountService, AppError>  {
-        let processor = QldbProcessor::new(ledger_name).await?;
-        Ok(AccountService { processor })
+    pub fn new(processor: QldbProcessor) -> AccountService {
+        AccountService { processor }
     }
 
-    pub async fn create_account(&self, new_account: NewAccount) -> Result<(String, Account), AppError>{
+    pub async fn create_account(&self, new_account: NewAccount) -> Result<(String, Account), AppError> {
         let account: Account = new_account.into();
         let document_id = self.processor.insert(&account).await?;
         Ok((document_id, account))

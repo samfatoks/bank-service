@@ -6,6 +6,7 @@ use crate::domain::{QldbInsertable, TransactionType};
 use std::convert::TryInto;
 use crate::error::{AppError, ErrorType};
 
+#[derive(Clone)]
 pub struct QldbProcessor {
     client: QLDBClient,
 }

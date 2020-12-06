@@ -8,11 +8,9 @@ pub struct TransferService {
 }
 
 impl TransferService {
-    pub async fn new(ledger_name: String) -> Result<TransferService, AppError>  {
-        let processor = QldbProcessor::new(ledger_name).await?;
-        Ok(TransferService { processor })
+    pub fn new(processor: QldbProcessor) -> TransferService {
+        TransferService { processor }
     }
-
 
     pub async fn transfer(&self, sender_account_number: String, recipient_account_number: String, amount: BigDecimal) -> Result<String, AppError> {
         let message = self.processor.transfer(sender_account_number, recipient_account_number, amount.clone()).await?;

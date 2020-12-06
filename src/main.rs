@@ -9,7 +9,7 @@ mod util;
 mod handler;
 
 
-use domain::{NewAccount, NewTransaction};
+use domain::{NewAccount, NewTransaction, AppState};
 use util::Config;
 use error::AppError;
 
@@ -29,6 +29,8 @@ async fn main() -> std::io::Result<()> {
         error!("Config Error: {}", err);
         process::exit(1);
     });
+
+    let app_state = AppState::new(config.clone()).await.unwrap();
     let http_port = config.http_port;
 
     HttpServer::new(move || {
@@ -36,7 +38,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(actix_web::middleware::Logger::new(
                 r#"%a "%r" %s %b "%{Referer}i" "%{User-Agent}i" %D"#,
             ))
-            .data(config.clone())
+            .data(app_state.clone())
             .wrap(actix_web::middleware::Compress::default())
             .service(web::scope("/")
                 .service(
