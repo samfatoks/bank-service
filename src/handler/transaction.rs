@@ -15,7 +15,7 @@ pub async fn handle_transaction(app_state: web::Data<AppState>, new_transaction:
     let transaction = new_transaction.into_inner();
     let amount = transaction.amount;
     let zero: BigDecimal = 0u32.into();
-    if amount < zero {
+    if amount <= zero {
         return Err(AppError::new(Some("Invalid transaction amount".to_string()), ErrorType::PayloadError));
     }
 
