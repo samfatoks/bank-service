@@ -1,5 +1,5 @@
-use serde::Deserialize;
 use ::config::ConfigError;
+use serde::Deserialize;
 #[derive(Deserialize, Clone)]
 pub struct Config {
     pub server_port: u16,

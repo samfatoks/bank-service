@@ -1,16 +1,16 @@
 mod account;
-mod transaction;
 mod app_state;
 mod response;
+mod transaction;
 
-pub use transaction::{TransactionType, NewTransaction};
 pub use account::{Account, NewAccount};
 pub use app_state::AppState;
 pub use response::Response;
+pub use transaction::{NewTransaction, TransactionType};
 
-use std::collections::HashMap;
-use ion_binary_rs::IonValue;
 use chrono::{DateTime, FixedOffset, Utc};
+use ion_binary_rs::IonValue;
+use std::collections::HashMap;
 
 pub trait QldbInsertable {
     fn table_name(&self) -> &str;

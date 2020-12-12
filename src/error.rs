@@ -1,12 +1,12 @@
-use serde::Serialize;
-use std::fmt;
-use ion_binary_rs::IonParserError;
-use qldb::QLDBError;
 use actix_web::{
     error::{JsonPayloadError, ResponseError},
     http::StatusCode,
     HttpResponse,
 };
+use ion_binary_rs::IonParserError;
+use qldb::QLDBError;
+use serde::Serialize;
+use std::fmt;
 
 #[derive(Debug)]
 pub enum ErrorType {
@@ -51,7 +51,7 @@ impl AppError {
             AppError {
                 message: None,
                 error_type: e,
-            } => e.to_string()
+            } => e.to_string(),
         }
     }
     fn error_type(&self) -> String {
@@ -85,28 +85,19 @@ impl fmt::Display for AppError {
 
 impl From<std::str::Utf8Error> for AppError {
     fn from(err: std::str::Utf8Error) -> Self {
-        AppError::new(
-            None,
-            ErrorType::Custom(err.to_string()),
-        )
+        AppError::new(None, ErrorType::Custom(err.to_string()))
     }
 }
 
 impl From<IonParserError> for AppError {
     fn from(err: IonParserError) -> Self {
-        AppError::new(
-            None,
-            ErrorType::IonError(err),
-        )
-    } 
+        AppError::new(None, ErrorType::IonError(err))
+    }
 }
 
 impl From<QLDBError> for AppError {
     fn from(err: QLDBError) -> Self {
-        AppError::new(
-            None,
-            ErrorType::QLDBError(err),
-        )
+        AppError::new(None, ErrorType::QLDBError(err))
     }
 }
 
@@ -124,7 +115,7 @@ impl From<JsonPayloadError> for AppError {
             _ => AppError {
                 message: Some("Unable to parse json playload".to_string()),
                 error_type: ErrorType::PayloadError,
-            }
+            },
         }
     }
 }

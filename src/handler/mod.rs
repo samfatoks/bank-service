@@ -1,4 +1,3 @@
-
 pub mod account;
 pub mod transaction;
 use crate::error::AppError;

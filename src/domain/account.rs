@@ -1,10 +1,9 @@
 use bigdecimal::BigDecimal;
-use std::{convert::TryFrom, convert::TryInto};
-use std::fmt::{Display, Formatter, Error as FmtError};
-use std::collections::HashMap;
-use ion_binary_rs::IonValue;
 use chrono::prelude::*;
-
+use ion_binary_rs::IonValue;
+use std::collections::HashMap;
+use std::fmt::{Display, Error as FmtError, Formatter};
+use std::{convert::TryFrom, convert::TryInto};
 
 use super::default_datetime;
 use super::QldbInsertable;
@@ -35,12 +34,16 @@ impl Account {
             phone,
             balance: BigDecimal::default().with_scale(2),
             created_at: now,
-            updated_at: now
+            updated_at: now,
         }
     }
 
     pub fn from_ions(result: Vec<IonValue>) -> Vec<Self> {
-        result.iter().map(|i| i.try_into()).filter_map(Result::ok).collect()
+        result
+            .iter()
+            .map(|i| i.try_into())
+            .filter_map(Result::ok)
+            .collect()
     }
 }
 
@@ -58,12 +61,27 @@ impl QldbInsertable for Account {
 
     fn to_params(&self) -> HashMap<String, IonValue> {
         let mut params = HashMap::new();
-        params.insert("account_number".to_string(), IonValue::String(self.account_number.to_string()));
+        params.insert(
+            "account_number".to_string(),
+            IonValue::String(self.account_number.to_string()),
+        );
         params.insert("name".to_string(), IonValue::String(self.name.to_string()));
-        params.insert("phone".to_string(), IonValue::String(self.phone.to_string()));
-        params.insert("balance".to_string(), IonValue::Decimal(self.balance.clone()));
-        params.insert("created_at".to_string(), IonValue::DateTime(self.created_at.clone()));
-        params.insert("updated_at".to_string(), IonValue::DateTime(self.updated_at.clone()));
+        params.insert(
+            "phone".to_string(),
+            IonValue::String(self.phone.to_string()),
+        );
+        params.insert(
+            "balance".to_string(),
+            IonValue::Decimal(self.balance.clone()),
+        );
+        params.insert(
+            "created_at".to_string(),
+            IonValue::DateTime(self.created_at.clone()),
+        );
+        params.insert(
+            "updated_at".to_string(),
+            IonValue::DateTime(self.updated_at.clone()),
+        );
         params
     }
 }
@@ -84,13 +102,13 @@ impl TryFrom<&IonValue> for Account {
         let created_at: DateTime<FixedOffset> = map.get("created_at").unwrap().try_into()?;
         let updated_at: DateTime<FixedOffset> = map.get("updated_at").unwrap().try_into()?;
         let account = Account {
-                account_number: account_number,
-                name: name,
-                phone: phone,
-                balance: balance.with_scale(2),
-                created_at: created_at,
-                updated_at: updated_at
-            };
+            account_number: account_number,
+            name: name,
+            phone: phone,
+            balance: balance.with_scale(2),
+            created_at: created_at,
+            updated_at: updated_at,
+        };
         Ok(account)
     }
 }
@@ -98,7 +116,7 @@ impl TryFrom<&IonValue> for Account {
 #[derive(Debug, Deserialize)]
 pub struct NewAccount {
     pub name: String,
-    pub phone: String
+    pub phone: String,
 }
 
 impl Into<Account> for NewAccount {
