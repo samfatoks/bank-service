@@ -1,29 +1,4 @@
-## Rust Bank Service
-### Assumptions
-* Production calls to QLDB should be a lot faster. Therefore, I'm making multiple calls per each transactional operation to make it closer to a real world app.
-* I’m using a 10 digit account number to represent the unique identifier that is known to the user(Buyers/Sellers). This is modeled after the 10 account number assigned by Nigerian banks.
-* Amount is stored on ledger in the major currency form (not minor or cents).
-
-### Good Practices
-* Central error management for the application - This is made possible by the capabilities of the Rust language.
-* Toml based configuration file for easy setup.
-* Handling transaction requests (Credit, Debit, Transfer) with one endpoint but with varying payload field/values.
-* The debit, credit and transfer operations are done within the transaction closure to allow full rollback in case any steps fail. Thanks for your amazing Rust QLDB Driver.
-
-### Missing features
-The following features are a most have for production applications but are missing in the app due to time constraint.
-* Transaction Logging: Transactions are not currently logged to a transaction table on QLDB.
-* Test - Lacking of unit and integration tests
-
-### Core Rust libraries used
-* QLDB Driver - https://github.com/Couragium/qldb-rs
-* Ion Library - https://github.com/Couragium/ion-binary-rs
-* Actix
-
-### Issues
-* I had problems using using the QLDB ledger created by David so I created a new ledger on my AWS account for the sake of this development.
-* Calls to QLDB is a bit slow. I can attribute the latency partly to the location of the AWS region where I created the QLDB ledger (us-east-1)
-
+## Wallet Service
 ### Setup
 On the QLDB page on AWS management console, perform the following operation:
 1. Create a ledger with name **bank-account-ledger** or any other name. Ensure to use the correct ledger name in the config file (Config.toml)

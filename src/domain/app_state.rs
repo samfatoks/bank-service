@@ -1,4 +1,4 @@
-use crate::{Config, AppError, core::QldbProcessor};
+use crate::{util::Config, AppError, core::QldbProcessor};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -7,7 +7,7 @@ pub struct AppState {
 
 impl AppState {
     pub async fn new(config: Config) -> Result<AppState, AppError>  {
-        let processor = QldbProcessor::new(config.ledger_name.clone()).await?;
+        let processor = QldbProcessor::new(config.ledger_name).await?;
         Ok(AppState { processor })
     }
 }

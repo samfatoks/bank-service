@@ -1,10 +1,9 @@
 use super::HandlerResult;
-use crate::domain::{AppState, TransactionType};
+use crate::domain::{AppState, Response, TransactionType};
 use crate::service::{AccountService, TransferService};
 use crate::error::{AppError, ErrorType};
 use crate::domain::NewTransaction;
 use bigdecimal::BigDecimal;
-use serde_json::json;
 use actix_web::{
     web::{self, Json},
     HttpResponse,
@@ -58,6 +57,6 @@ pub async fn handle_transaction(app_state: web::Data<AppState>, new_transaction:
     };
 
 
-    Ok(HttpResponse::Ok().json(json!({"message": message})))
+    Ok(HttpResponse::Ok().json(Response::new(message)))
 }
 

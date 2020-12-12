@@ -14,26 +14,23 @@ use util::Config;
 use error::AppError;
 
 use actix_web::{web, App, FromRequest, HttpServer};
-use std::{env, process};
+use std::process;
+use dotenv::dotenv;
 
-#[actix_rt::main]
+#[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env::set_var("RUST_LOG", "info");
+    dotenv().ok();
     env_logger::builder().format_timestamp_millis().init();
 
-    const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
-    const NAME: Option<&'static str> = option_env!("CARGO_PKG_NAME");
-    info!("{} v{}", NAME.unwrap_or("Bank"), VERSION.unwrap_or("0.1.0"));
-
-    let config: Config = Config::load().unwrap_or_else(|err| {
+    let config = Config::from_env().unwrap_or_else(|err| {
         error!("Config Error: {}", err);
         process::exit(1);
     });
 
     let app_state = AppState::new(config.clone()).await.unwrap();
-    let http_port = config.http_port;
+    let server_port = config.server_port;
 
-    HttpServer::new(move || {
+    let server = HttpServer::new(move || {
         App::new()
             .wrap(actix_web::middleware::Logger::new(
                 r#"%a "%r" %s %b "%{Referer}i" "%{User-Agent}i" %D"#,
@@ -70,8 +67,14 @@ async fn main() -> std::io::Result<()> {
                 ),
             )
     })
-    .bind(format!("0.0.0.0:{}", http_port))
+    .bind(format!("0.0.0.0:{}", server_port))
     .unwrap()
-    .run()
-    .await
+    .run();
+
+    info!(
+        "Server running at {}",
+        format!("http://localhost:{}", server_port)
+    );
+
+    server.await
 }

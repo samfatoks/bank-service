@@ -9,7 +9,7 @@ use chrono::prelude::*;
 use super::default_datetime;
 use super::QldbInsertable;
 use crate::error::AppError;
-use crate::util::rand_util;
+use crate::util;
 use serde::{Deserialize, Serialize};
 
 const TABLE_NAME: &str = "bank_accounts";
@@ -27,7 +27,7 @@ pub struct Account {
 
 impl Account {
     pub fn new(name: String, phone: String) -> Account {
-        let account_number = rand_util::generate_numeric(10).unwrap();
+        let account_number = util::generate_numeric(10).unwrap();
         let now: DateTime<FixedOffset> = Utc::now().into();
         Account {
             account_number,

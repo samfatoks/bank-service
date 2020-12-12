@@ -1,8 +1,6 @@
 use super::HandlerResult;
-use crate::AppState;
 use crate::service::AccountService;
-use crate::domain::NewAccount;
-use serde_json::json;
+use crate::domain::{AppState, NewAccount, Response};
 use actix_web::{
     web::{self, Json},
     HttpResponse,
@@ -25,7 +23,7 @@ pub async fn delete_account(app_state: web::Data<AppState>, path: web::Path<Stri
     let account_number = path.into_inner();
     let account_service = AccountService::new(app_state.processor.clone());
     account_service.delete_account(account_number).await?;
-    Ok(HttpResponse::Ok().json(json!({"message": "Successfully deleted accoun"})))
+    Ok(HttpResponse::Ok().json(Response::new("Successfully deleted accoun")))
 }
 pub async fn create_account(app_state: web::Data<AppState>, new_account: Json<NewAccount>) -> HandlerResult {
     let account_service = AccountService::new(app_state.processor.clone());

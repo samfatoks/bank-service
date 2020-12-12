@@ -1,17 +1,33 @@
-use std::fs;
 use serde::Deserialize;
-use std::io::Error;
-
-#[derive(Debug, Clone, Deserialize)]
+use ::config::ConfigError;
+#[derive(Deserialize, Clone)]
 pub struct Config {
+    pub server_port: u16,
     pub ledger_name: String,
-    pub http_port: u32
+}
+impl Config {
+    pub fn from_env() -> Result<Self, ConfigError> {
+        let mut cfg = ::config::Config::new();
+        cfg.merge(::config::Environment::new())?;
+        cfg.try_into()
+    }
 }
 
-impl Config {
-    pub fn load() -> Result<Config, Error> {
-        let contents = fs::read_to_string("Config.toml")?;
-        let config: Config = toml::from_str(&contents)?;
-        Ok(config)
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dotenv::dotenv;
+
+    #[test]
+    fn test_from_env_ok() {
+        dotenv().ok();
+        let config_result = Config::from_env();
+        assert!(config_result.is_ok());
+    }
+
+    #[test]
+    fn test_from_env_failure_when_env_vars_not_set() {
+        let config_result = Config::from_env();
+        assert!(config_result.is_err());
     }
 }

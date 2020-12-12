@@ -1,10 +1,12 @@
 mod account;
 mod transaction;
 mod app_state;
+mod response;
 
 pub use transaction::{TransactionType, NewTransaction};
 pub use account::{Account, NewAccount};
 pub use app_state::AppState;
+pub use response::Response;
 
 use std::collections::HashMap;
 use ion_binary_rs::IonValue;

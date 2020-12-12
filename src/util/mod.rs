@@ -1,4 +1,5 @@
-pub mod rand_util;
-pub mod config;
+mod rand_util;
+mod config;
 
-pub use config::Config;
+pub use self::config::Config;
+pub use rand_util::generate_numeric;
