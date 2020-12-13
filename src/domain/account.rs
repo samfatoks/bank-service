@@ -11,7 +11,7 @@ use crate::error::AppError;
 use crate::util;
 use serde::{Deserialize, Serialize};
 
-const TABLE_NAME: &str = "bank_accounts";
+const TABLE_NAME: &str = "accounts";
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Account {
     pub account_number: String,

@@ -1,14 +1,14 @@
-## Wallet Service
+## Bank Service
 ### Setup
 On the QLDB page on AWS management console, perform the following operation:
-1. Create a ledger with name **bank-account-ledger** or any other name. Ensure to use the correct ledger name in the config file (Config.toml)
+1. Create a ledger with name **bank** or any other name. Ensure to use the correct ledger name in the config file (Config.toml)
 2. Create table
 ```
-CREATE TABLE bank_accounts
+CREATE TABLE accounts
 ```
 3. Create index on table
 ```
-CREATE INDEX ON bank_accounts (account_number)
+CREATE INDEX ON accounts (account_number)
 ```
 
 ### Run

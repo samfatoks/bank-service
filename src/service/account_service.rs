@@ -23,7 +23,7 @@ impl AccountService {
 
     pub async fn find_account(&self, account_number: String) -> Result<Account, AppError> {
         let query_str = format!(
-            "SELECT * FROM bank_accounts b WHERE b.account_number = '{}'",
+            "SELECT * FROM accounts b WHERE b.account_number = '{}'",
             account_number
         );
         let results = self.processor.query(&query_str).await?;
@@ -39,14 +39,14 @@ impl AccountService {
     }
 
     pub async fn find_accounts(&self) -> Result<Vec<Account>, AppError> {
-        let results = self.processor.query("SELECT * FROM bank_accounts").await?;
+        let results = self.processor.query("SELECT * FROM accounts").await?;
         let accounts = Account::from_ions(results);
         Ok(accounts)
     }
 
     pub async fn delete_account(&self, account_number: String) -> Result<String, AppError> {
         let query_str = format!(
-            "DELETE FROM bank_accounts b WHERE b.account_number = '{}'",
+            "DELETE FROM accounts b WHERE b.account_number = '{}'",
             account_number
         );
         match self.processor.delete(&query_str).await {
