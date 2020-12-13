@@ -10,6 +10,12 @@ CREATE TABLE accounts
 ```
 CREATE INDEX ON accounts (account_number)
 ```
+4. Create .env file at the root of the project with the following details.
+```
+RUST_LOG=info,actix_web=info
+SERVER_PORT=8080
+LEDGER_NAME=bank
+```
 
 ### Run
 In the project root directory, type the command below to run </br>
