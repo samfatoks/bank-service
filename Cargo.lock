@@ -1080,9 +1080,9 @@ dependencies = [
 
 [[package]]
 name = "ion-binary-rs"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54ba71e45136f73329f4232626c8fa5a3d2591a9c4ce60f69140745c335971fe"
+checksum = "7f26fd37517e580ed4a9e95f3af47598a00b8f34049431a326f12c55573957ac"
 dependencies = [
  "bigdecimal",
  "chrono",
@@ -1513,12 +1513,13 @@ dependencies = [
 
 [[package]]
 name = "qldb"
-version = "0.4.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f36570363acfe662d7ce4df404d02111fdf80c922230c2e5db65a54199a053d"
+checksum = "231ba43aa96cbed0a39add3862ce7b46687510e37f5594b685055238f1d7c562"
 dependencies = [
  "futures",
  "ion-binary-rs",
+ "num-traits",
  "rusoto_core",
  "rusoto_qldb_session",
  "sha2",

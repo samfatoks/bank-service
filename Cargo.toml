@@ -11,7 +11,7 @@ edition = "2018"
 log = "0.4"
 env_logger = "0.7"
 serde = "1.0.104"
-qldb = "0.4.1"
+qldb = "0.6.0"
 ion-binary-rs = "0.7.0"
 bigdecimal = { version = "0.2.0", features = ["serde"] }
 rand = "0.7.3"

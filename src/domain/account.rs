@@ -1,6 +1,7 @@
 use bigdecimal::BigDecimal;
 use chrono::prelude::*;
 use ion_binary_rs::IonValue;
+use qldb::Document;
 use std::collections::HashMap;
 use std::fmt::{Display, Error as FmtError, Formatter};
 use std::{convert::TryFrom, convert::TryInto};
@@ -38,7 +39,7 @@ impl Account {
         }
     }
 
-    pub fn from_ions(result: Vec<IonValue>) -> Vec<Self> {
+    pub fn from_documents(result: Vec<Document>) -> Vec<Self> {
         result
             .iter()
             .map(|i| i.try_into())
@@ -86,28 +87,23 @@ impl QldbInsertable for Account {
     }
 }
 
-impl TryFrom<&IonValue> for Account {
+impl TryFrom<&Document> for Account {
     type Error = AppError;
 
-    fn try_from(value: &IonValue) -> Result<Self, Self::Error> {
-        let map: HashMap<String, IonValue> = value.try_into().unwrap();
-
-        let account_number: String = map.get("account_number").unwrap().try_into()?;
-        let name: String = map.get("name").unwrap().try_into()?;
-        let phone: String = map.get("phone").unwrap().try_into()?;
-        let mut balance = BigDecimal::default();
-        if let IonValue::Decimal(bal) = map.get("balance").unwrap() {
-            balance = bal.clone();
-        }
-        let created_at: DateTime<FixedOffset> = map.get("created_at").unwrap().try_into()?;
-        let updated_at: DateTime<FixedOffset> = map.get("updated_at").unwrap().try_into()?;
+    fn try_from(doc: &Document) -> Result<Self, Self::Error> {
+        let account_number: String = doc.get_value("account_number")?;
+        let name: String = doc.get_value("name")?;
+        let phone: String = doc.get_value("phone")?;
+        let balance: BigDecimal = doc.get_value("balance")?;
+        let created_at: DateTime<FixedOffset> = doc.get_value("created_at")?;
+        let updated_at: DateTime<FixedOffset> = doc.get_value("updated_at")?;
         let account = Account {
-            account_number: account_number,
-            name: name,
-            phone: phone,
+            account_number,
+            name,
+            phone,
             balance: balance.with_scale(2),
-            created_at: created_at,
-            updated_at: updated_at,
+            created_at,
+            updated_at,
         };
         Ok(account)
     }

@@ -27,12 +27,13 @@ impl AccountService {
             account_number
         );
         let results = self.processor.query(&query_str).await?;
-        if results.len() == 0 {
+        let docs = results.into_inner();
+        if docs.len() == 0 {
             Err(AppError::from_type(ErrorType::AccountNotFound(
                 account_number,
             )))
         } else {
-            let result = &results[0];
+            let result = docs.get(0).unwrap();
             let account: Account = result.try_into().unwrap();
             Ok(account)
         }
@@ -40,7 +41,14 @@ impl AccountService {
 
     pub async fn find_accounts(&self) -> Result<Vec<Account>, AppError> {
         let results = self.processor.query("SELECT * FROM accounts").await?;
-        let accounts = Account::from_ions(results);
+        // let points: u64 = document.get_value("points")?;
+        // let result: u64 = results
+        //     .into_iter()
+        //     .map(|doc| doc.get_value::<u64>("points"))
+        //     .collect::<Result<Vec<u64>, _>>()?
+        //     .into_iter()
+        //     .fold(0, |acc, val| acc + val);
+        let accounts = Account::from_documents(results.into_inner());
         Ok(accounts)
     }
 

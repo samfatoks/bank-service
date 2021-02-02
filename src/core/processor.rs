@@ -2,9 +2,7 @@ use crate::domain::{QldbInsertable, TransactionType};
 use crate::error::{AppError, ErrorType};
 use bigdecimal::BigDecimal;
 use ion_binary_rs::IonValue;
-use qldb::QLDBClient;
-use std::collections::HashMap;
-use std::convert::TryInto;
+use qldb::{DocumentCollection, QLDBClient};
 
 #[derive(Clone)]
 pub struct QldbProcessor {
@@ -31,13 +29,12 @@ impl QldbProcessor {
             .await?;
 
         let result = &results[0];
-        let map: HashMap<String, IonValue> = result.try_into().unwrap();
-        let document_id: String = map.get("documentId").unwrap().try_into()?;
+        let document_id: String = result.get_value("documentId")?;
         Ok(document_id)
     }
 
-    pub async fn query(&self, query_str: &str) -> Result<Vec<IonValue>, AppError> {
-        let mut builder = self.client.read_query(query_str).await?;
+    pub async fn query(&self, query_str: &str) -> Result<DocumentCollection, AppError> {
+        let builder = self.client.read_query(query_str).await?;
         let results = builder.execute().await?;
         Ok(results)
     }
@@ -51,16 +48,15 @@ impl QldbProcessor {
             })
             .await?;
 
-        if results.len() == 0 {
+        let docs = results.into_inner();
+        if docs.len() == 0 {
             Err(AppError::from_type(ErrorType::NoRowsAffected))
         } else {
             let mut doc_ids = Vec::new();
-            for result in &results {
-                let map: HashMap<String, IonValue> = result.try_into().unwrap();
-                let document_id: String = map.get("documentId").unwrap().try_into()?;
+            for doc in docs {
+                let document_id: String = doc.get_value("documentId")?;
                 doc_ids.push(document_id);
             }
-
             Ok(doc_ids)
         }
     }
@@ -80,13 +76,8 @@ impl QldbProcessor {
                     .execute()
                     .await?;
 
-                let select_result = select_results[0].clone();
-                let map: HashMap<String, IonValue> = select_result.try_into().unwrap();
-
-                let mut balance = BigDecimal::default();
-                if let IonValue::Decimal(bal) = map.get("balance").unwrap() {
-                    balance = bal.clone();
-                }
+                let select_doc = select_results[0].clone();
+                let balance = select_doc.get_value("balance")?;
                 let new_bal = match transaction_type {
                     TransactionType::CREDIT => balance + amount.clone(),
                     TransactionType::DEBIT => balance - amount.clone(),
@@ -134,12 +125,8 @@ impl QldbProcessor {
                     .execute()
                     .await?;
 
-                let src_balance_result = src_balance_results[0].clone();
-                let map: HashMap<String, IonValue> = src_balance_result.try_into().unwrap();
-                let mut src_balance = BigDecimal::default();
-                if let IonValue::Decimal(bal) = map.get("balance").unwrap() {
-                    src_balance = bal.clone();
-                }
+                let src_balance_doc = src_balance_results[0].clone();
+                let src_balance: BigDecimal = src_balance_doc.get_value("balance")?;
                 let new_src_bal = src_balance - amount.clone();
                 let zero: BigDecimal = 0u32.into();
                 if new_src_bal < zero {
@@ -152,27 +139,23 @@ impl QldbProcessor {
                     .execute()
                     .await?;
 
-                let dst_balance_result = dst_balance_results[0].clone();
-                let map: HashMap<String, IonValue> = dst_balance_result.try_into().unwrap();
-                let mut dst_balance = BigDecimal::default();
-                if let IonValue::Decimal(bal) = map.get("balance").unwrap() {
-                    dst_balance = bal.clone();
-                }
+                let dst_balance_doc = dst_balance_results[0].clone();
+                let dst_balance: BigDecimal = dst_balance_doc.get_value("balance")?;
                 let new_dst_bal = dst_balance + amount.clone();
 
-                client
+                let qb = client
                     .query("UPDATE accounts SET balance = ? WHERE account_number = ?")
                     .param(IonValue::Decimal(new_src_bal))
-                    .param(IonValue::String(sender_account_number.clone()))
-                    .execute()
-                    .await?;
+                    .param(IonValue::String(sender_account_number.clone()));
+                debug!("{:?}", qb);
+                qb.execute().await?;
 
-                client
+                let qb = client
                     .query("UPDATE accounts SET balance = ? WHERE account_number = ?")
                     .param(IonValue::Decimal(new_dst_bal))
-                    .param(IonValue::String(recipient_account_number.clone()))
-                    .execute()
-                    .await?;
+                    .param(IonValue::String(recipient_account_number.clone()));
+                debug!("{:?}", qb);
+                qb.execute().await?;
 
                 let message = format!(
                     "Successfully transferred ${} from {} to {}",

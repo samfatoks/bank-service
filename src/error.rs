@@ -4,7 +4,7 @@ use actix_web::{
     HttpResponse,
 };
 use ion_binary_rs::IonParserError;
-use qldb::QLDBError;
+use qldb::{QLDBError, QLDBExtractError};
 use serde::Serialize;
 use std::fmt;
 
@@ -14,6 +14,7 @@ pub enum ErrorType {
     AccountError(String),
     IonError(IonParserError),
     QLDBError(QLDBError),
+    QLDBExtractError(QLDBExtractError),
     InsufficientBalance,
     AccountNotFound(String),
     NoRowsAffected,
@@ -27,6 +28,7 @@ impl fmt::Display for ErrorType {
             ErrorType::AccountError(message) => write!(f, "{}", message),
             ErrorType::IonError(s) => write!(f, "Ion Parser Error: {}", s),
             ErrorType::QLDBError(s) => write!(f, "QLDB Error: {}", s),
+            ErrorType::QLDBExtractError(s) => write!(f, "QLDB Extract Error: {}", s),
             ErrorType::InsufficientBalance => write!(f, "Insufficient balance in account"),
             ErrorType::AccountNotFound(s) => write!(f, "Account not found: {}", s),
             ErrorType::NoRowsAffected => write!(f, "No rows affected"),
@@ -98,6 +100,12 @@ impl From<IonParserError> for AppError {
 impl From<QLDBError> for AppError {
     fn from(err: QLDBError) -> Self {
         AppError::new(None, ErrorType::QLDBError(err))
+    }
+}
+
+impl From<QLDBExtractError> for AppError {
+    fn from(err: QLDBExtractError) -> Self {
+        AppError::new(None, ErrorType::QLDBExtractError(err))
     }
 }
 
