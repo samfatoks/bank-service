@@ -4,7 +4,7 @@ use actix_web::{
     HttpResponse,
 };
 use ion_binary_rs::IonParserError;
-use qldb::{QLDBError, QLDBExtractError};
+use qldb::{QldbError, QldbExtractError};
 use serde::Serialize;
 use std::fmt;
 
@@ -13,8 +13,8 @@ pub enum ErrorType {
     Custom(String),
     AccountError(String),
     IonError(IonParserError),
-    QLDBError(QLDBError),
-    QLDBExtractError(QLDBExtractError),
+    QldbError(QldbError),
+    QldbExtractError(QldbExtractError),
     InsufficientBalance,
     AccountNotFound(String),
     NoRowsAffected,
@@ -27,8 +27,8 @@ impl fmt::Display for ErrorType {
             ErrorType::Custom(message) => write!(f, "{}", message),
             ErrorType::AccountError(message) => write!(f, "{}", message),
             ErrorType::IonError(s) => write!(f, "Ion Parser Error: {}", s),
-            ErrorType::QLDBError(s) => write!(f, "QLDB Error: {}", s),
-            ErrorType::QLDBExtractError(s) => write!(f, "QLDB Extract Error: {}", s),
+            ErrorType::QldbError(s) => write!(f, "Qldb Error: {}", s),
+            ErrorType::QldbExtractError(s) => write!(f, "Qldb Extract Error: {}", s),
             ErrorType::InsufficientBalance => write!(f, "Insufficient balance in account"),
             ErrorType::AccountNotFound(s) => write!(f, "Account not found: {}", s),
             ErrorType::NoRowsAffected => write!(f, "No rows affected"),
@@ -97,15 +97,15 @@ impl From<IonParserError> for AppError {
     }
 }
 
-impl From<QLDBError> for AppError {
-    fn from(err: QLDBError) -> Self {
-        AppError::new(None, ErrorType::QLDBError(err))
+impl From<QldbError> for AppError {
+    fn from(err: QldbError) -> Self {
+        AppError::new(None, ErrorType::QldbError(err))
     }
 }
 
-impl From<QLDBExtractError> for AppError {
-    fn from(err: QLDBExtractError) -> Self {
-        AppError::new(None, ErrorType::QLDBExtractError(err))
+impl From<QldbExtractError> for AppError {
+    fn from(err: QldbExtractError) -> Self {
+        AppError::new(None, ErrorType::QldbExtractError(err))
     }
 }
 

@@ -4,6 +4,7 @@ use serde::Deserialize;
 pub struct Config {
     pub server_port: u16,
     pub ledger_name: String,
+    pub session_pool_size: u16,
 }
 impl Config {
     pub fn from_env() -> Result<Self, ConfigError> {

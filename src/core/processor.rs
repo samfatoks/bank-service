@@ -2,20 +2,24 @@ use crate::domain::{QldbInsertable, TransactionType};
 use crate::error::{AppError, ErrorType};
 use bigdecimal::BigDecimal;
 use ion_binary_rs::IonValue;
-use qldb::{DocumentCollection, QLDBClient};
+use qldb::{DocumentCollection, QldbClient};
+use std::collections::HashMap;
 
 #[derive(Clone)]
 pub struct QldbProcessor {
-    client: QLDBClient,
+    client: QldbClient,
 }
 
 impl QldbProcessor {
-    pub async fn new(ledger_name: String) -> Result<Self, AppError> {
-        let client = QLDBClient::default(&ledger_name).await?;
+    pub async fn new(ledger_name: String, session_pool_size: u16) -> Result<Self, AppError> {
+        let client = QldbClient::default(&ledger_name, session_pool_size).await?;
         Ok(QldbProcessor { client })
     }
 
     pub async fn insert<I: QldbInsertable>(&self, model: &I) -> Result<String, AppError> {
+        let mut value_to_insert = HashMap::new();
+        value_to_insert.insert("test_column", "test_value");
+
         let results = self
             .client
             .transaction_within(|client| async move {

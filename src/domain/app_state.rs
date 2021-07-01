@@ -7,7 +7,7 @@ pub struct AppState {
 
 impl AppState {
     pub async fn new(config: Config) -> Result<AppState, AppError> {
-        let processor = QldbProcessor::new(config.ledger_name).await?;
+        let processor = QldbProcessor::new(config.ledger_name, config.session_pool_size).await?;
         Ok(AppState { processor })
     }
 }
